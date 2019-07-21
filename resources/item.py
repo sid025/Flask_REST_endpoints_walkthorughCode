@@ -3,6 +3,7 @@ from flask import jsonify
 from flask_jwt import jwt_required
 import sqlite3
 from models.item import ItemModel
+from flask_jwt_extended import jwt_required,get_jwt_claims,jwt_optional,get_jwt_identity,fresh_jwt_required
 
 
 # Api works with resources and every resource has to be a class
@@ -10,7 +11,8 @@ from models.item import ItemModel
 
 class Item(Resource):
 
-    @jwt_required()
+    # The get and delete method will run given any access_token type i.e. fresh or unfresh, does not matter
+    @jwt_required
     def get(self,name):
         item=ItemModel.find_by_name(name)
         if item:
@@ -44,6 +46,8 @@ class Item(Resource):
         return ({'Error':"Item not found"}),404
         '''
 
+    # The post method will run given only fresh access_token type
+    @fresh_jwt_required
     def post(self,name):
 
         if ItemModel.find_by_name(name):
@@ -87,8 +91,12 @@ class Item(Resource):
             return  (new_item),201
         '''
 
-
+    @jwt_required
     def delete(self,name):
+        claims=get_jwt_claims()
+        if not claims['is_admin']:
+            return {'Error':'You need admin privileges to delete items.'},401
+
         connection=sqlite3.connect('data.db')
         cursor=connection.cursor()
         query="DELETE FROM items WHERE name=?"
@@ -144,7 +152,10 @@ class Item(Resource):
 
 
 class ItemList(Resource):
+    @jwt_optional
     def get(self):
+        user_id=get_jwt_identity() # Returns user_id of the user that is currently stored int he jwt
+
         connection = sqlite3.connect('data.db')
         cursor = connection.cursor()
 
@@ -158,5 +169,10 @@ class ItemList(Resource):
 
         connection.close()
 
-        return {'itemlist':item}
+        if user_id: # If this resource was called with the user logged in and passing his/her jwt token, we return all items else we return just the name of items
+            return {'items':item},200
+        return {
+            'item_names_only':[i[0] for i in item],
+            'Message':"More data available if you login and pass your token"
+        },200
 
