@@ -8,6 +8,10 @@ from resources.item import Item, ItemList
 # If we import q module, all the code inside it gets executed while importing, that is why , in each module, we should mention to execute the code only when the code is run by that module by:
 # if __name__=='__main__:' and only the module that is used to run i.e the module on which we right clock and run is assigned the '__main__' name
 
+
+
+print(jsbckjsa bckjs ckjclksancksancskcnskcnskc)
+
 app=Flask(__name__)
 app.secret_key='cisco'
 api=Api(app)
