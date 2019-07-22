@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from flask_restful import Api
 from flask_jwt import JWT
 from security import authenticate,identity
-from resources.user import UserRegister,UserLogin,TokenRefresh
+from resources.user import UserRegister,UserLogin,TokenRefresh, UserLogout
 from resources.item import Item, ItemList
 from blacklist import BLACKLIST
 
@@ -22,12 +22,6 @@ api=Api(app)
 app.config['JWT_BLACKLIST_ENABLED']=True
 # We enable the blacklist for both 'access' and 'refresh' types
 app.config['JWT_BLACKLIST_TOKEN_CHECKS']=['access','refresh']
-
-
-
-
-
-
 
 
 
@@ -54,7 +48,7 @@ def add_claims_to_jwt(identity):
 # If false, it does nothing
 @jwt.token_in_blacklist_loader
 def check_if_token_in_blacklist(decrypted_token):
-    return decrypted_token['identity'] in BLACKLIST
+    return decrypted_token['jti'] in BLACKLIST
 
 
 # When Flask-JWT-Extended realizes that the token that has been sent to us has expired ( usually 5 mins after create_access_token ), it calls the below method()
@@ -117,6 +111,8 @@ api.add_resource(Item,"/item/<string:name>")
 api.add_resource(UserRegister,"/register")
 api.add_resource(UserLogin,"/login")
 api.add_resource(TokenRefresh,"/refresh")
+api.add_resource(UserLogout,"/logout")
+
 
 
 if __name__=='__main__':

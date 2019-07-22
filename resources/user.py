@@ -4,7 +4,12 @@ from flask_restful import reqparse
 from models.user import UserModel
 from werkzeug.security import safe_str_cmp
 
-from flask_jwt_extended import create_access_token,create_refresh_token,jwt_refresh_token_required,get_jwt_identity
+from flask_jwt_extended import create_access_token,create_refresh_token,jwt_refresh_token_required,get_jwt_identity,jwt_required, get_raw_jwt
+
+from blacklist import BLACKLIST
+
+
+
 
 _user_parser = reqparse.RequestParser()  # will validate the incoming request ( can also be used with form validation )
 _user_parser.add_argument("username", type=str, required=True, help="This is a required field")
@@ -58,6 +63,17 @@ class UserLogin(Resource):
         # Create an access token
         # Create a refresh token
         # Return them
+
+
+class UserLogout(Resource):
+    @jwt_required
+    def post(self):
+        #Every access token (JWT) has a unique ID ------> JTI i.e. JWT Identifier
+        jti=get_raw_jwt()['jti']
+        BLACKLIST.add(jti)
+        return {'Message':"Successfully logged out"},200
+
+
 
 class TokenRefresh(Resource):
     @jwt_refresh_token_required
