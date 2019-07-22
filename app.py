@@ -4,7 +4,7 @@ from flask_jwt import JWT
 from security import authenticate,identity
 from resources.user import UserRegister,UserLogin,TokenRefresh
 from resources.item import Item, ItemList
-
+from blacklist import BLACKLIST
 
 
 from flask_jwt_extended import JWTManager,jwt_required,get_jwt_claims
@@ -18,6 +18,19 @@ from flask_jwt_extended import JWTManager,jwt_required,get_jwt_claims
 app=Flask(__name__)
 app.secret_key='cisco'
 api=Api(app)
+# Blacklisting users from access to resources
+app.config['JWT_BLACKLIST_ENABLED']=True
+# We enable the blacklist for both 'access' and 'refresh' types
+app.config['JWT_BLACKLIST_TOKEN_CHECKS']=['access','refresh']
+
+
+
+
+
+
+
+
+
 
 #item=[]
 
@@ -35,6 +48,14 @@ def add_claims_to_jwt(identity):
         return {
             'is_admin':False
         }
+
+
+# If the token is blacklisted ( by means of blacklisted IDs here ), then this function ( if it returns True ) goes to @revoked_token_callback
+# If false, it does nothing
+@jwt.token_in_blacklist_loader
+def check_if_token_in_blacklist(decrypted_token):
+    return decrypted_token['identity'] in BLACKLIST
+
 
 # When Flask-JWT-Extended realizes that the token that has been sent to us has expired ( usually 5 mins after create_access_token ), it calls the below method()
 # in order for us to instruct Flask-JWT-Extended on what message needs to be sent out back to the client
